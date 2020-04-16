@@ -14,6 +14,14 @@ router.get('/', (req, res) => {
   });
 });
 
+function validateSchemeId(id){
+  Schemes.findById(id)
+    .then(scheme=> {return {success: true, message: scheme, errors: []}})
+    .catch(error=>{
+      console.log(error.message)
+      return {success: false, message: error.message, errors: [error]}
+    })
+  }
 router.get('/:id', (req, res) => {
   const { id } = req.params;
 
@@ -51,7 +59,12 @@ router.post('/', (req, res) => {
 
   Schemes.add(schemeData)
   .then(scheme => {
-    res.status(201).json(scheme);
+    return Schemes.find()
+    .then(schemes=>res.status(201).json(schemes[schemes.length-1]))
+    .catch(err=>{
+      console.log(err);
+      res.status(500).json({message: 'server error'})
+    })
   })
   .catch (err => {
     res.status(500).json({ message: 'Failed to create new scheme' });
@@ -68,6 +81,10 @@ router.post('/:id/steps', (req, res) => {
       Schemes.addStep(stepData, id)
       .then(step => {
         res.status(201).json(step);
+      })
+      .catch(err=>{
+        console.log(err);
+        res.status(500).json(err.message);
       })
     } else {
       res.status(404).json({ message: 'Could not find scheme with given id.' })
@@ -87,7 +104,12 @@ router.put('/:id', (req, res) => {
     if (scheme) {
       Schemes.update(changes, id)
       .then(updatedScheme => {
-        res.json(updatedScheme);
+        return Schemes.find()
+        .then(schemes=>res.status(201).json(schemes[schemes.length-1]))
+        .catch(err=>{
+          console.log(err);
+          res.status(500).json({message: 'server error'})
+    })
       });
     } else {
       res.status(404).json({ message: 'Could not find scheme with given id' });
